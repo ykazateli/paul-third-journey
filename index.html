@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Третье путешествие Павла | Указатели</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Comic Neue', 'Comic Sans MS', sans-serif;
+            background: #fdf8e7;
+            background-image: radial-gradient(circle at 10% 20%, rgba(218, 178, 115, 0.08) 0%, rgba(0,0,0,0) 50%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1000px;
+            width: 100%;
+            background: #fff6e8;
+            border-radius: 48px;
+            box-shadow: 0 20px 35px rgba(100, 70, 30, 0.15);
+            padding: 30px 30px 40px;
+            border: 1px solid #f0dbb4;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .header .studio-link {
+            display: inline-block;
+            font-size: 1rem;
+            color: #4A90D9;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid #4A90D9;
+            padding-bottom: 2px;
+            transition: 0.2s;
+        }
+
+        .header .studio-link:hover {
+            color: #2c6aa0;
+            border-bottom-color: #2c6aa0;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            color: #4a3520;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .header .subtitle {
+            font-size: 1rem;
+            color: #7a5a3a;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        .screen {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .intro-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #3e2c1a;
+            margin: 20px 0;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #e6dacb;
+        }
+
+        .intro-text .highlight {
+            color: #b48a62;
+            font-weight: 600;
+        }
+
+        .intro-text .reference {
+            display: inline-block;
+            background: #f4ede4;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            color: #b48a62;
+            margin-top: 12px;
+        }
+
+        .map-wrapper {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(100, 70, 30, 0.15);
+            border: 2px solid #e6dacb;
+        }
+
+        .map-wrapper img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .city-point {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            background: #b48a62;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+            transition: 0.25s;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            user-select: none;
+        }
+
+        .city-point:hover {
+            transform: translate(-50%, -50%) scale(1.25);
+            background: #d4a017;
+            box-shadow: 0 0 18px rgba(212, 160, 23, 0.8);
+            z-index: 15;
+        }
+
+        .city-point.visited {
+            background: #4CAF50;
+            border-color: #ffffff;
+        }
+
+        .city-point.visited:hover {
+            background: #43A047;
+        }
+
+        .city-label {
+            position: absolute;
+            transform: translate(-50%, -160%);
+            background: rgba(70, 40, 20, 0.92);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: 0.2s;
+            z-index: 20;
+        }
+
+        .city-point:hover + .city-label {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 20, 10, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fffcf5;
+            max-width: 550px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 32px;
+            padding: 35px 50px 30px 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            position: relative;
+            border: 1px solid #e6dacb;
+            text-align: left;
+        }
+
+        .modal-content .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 2rem;
+            line-height: 1;
+            color: #b48a62;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 6px 12px;
+            transition: 0.2s;
+            z-index: 10;
+            border-radius: 50%;
+        }
+
+        .modal-content .close-btn:hover {
+            color: #7a5a3a;
+            background: #f4ede4;
+            transform: scale(1.1);
+        }
+
+        .modal-content .modal-city {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #b48a62;
+            margin-bottom: 6px;
+            padding-right: 40px;
+        }
+
+        .modal-content .modal-verse {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #3e2c1a;
+            font-style: italic;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0e6d8;
+            margin-bottom: 15px;
+        }
+
+        .modal-content .modal-text {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #3e2c1a;
+        }
+
+        .modal-content .modal-ref {
+            display: inline-block;
+            margin-top: 12px;
+            background: #f4ede4;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #b48a62;
+            font-weight: 600;
+        }
+
+        .finish-box {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 30px 25px;
+            border: 1px solid #e6dacb;
+            margin: 20px 0;
+        }
+
+        .finish-box h2 {
+            font-size: 1.8rem;
+            color: #4a3520;
+            margin-bottom: 15px;
+        }
+
+        .finish-box p {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #3e2c1a;
+            margin-bottom: 12px;
+        }
+
+        .finish-box .final-verse {
+            font-style: italic;
+            font-size: 1rem;
+            color: #b48a62;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f4ede4;
+            border-radius: 16px;
+        }
+
+        button {
+            background: #b48a62;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        button:hover {
+            background: #9a704a;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background: #e6dacb;
+            color: #4a3520;
+        }
+
+        button.secondary:hover {
+            background: #d5c4b0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-buttons button {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .progress {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #5a3c1a;
+            background: #e9dbbc;
+            padding: 10px 20px;
+            border-radius: 60px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+
+        .footer {
+            margin-top: 30px;
+            border-top: 1px solid #e6dacb;
+            padding-top: 20px;
+            text-align: center;
+        }
+
+        .footer .studio-link {
+            color: #4A90D9;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #4A90D9;
+            padding-bottom: 2px;
+        }
+
+        .footer .small-note {
+            display: block;
+            margin-top: 6px;
+            color: #a58d7a;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 600px) {
+            .app-container { padding: 20px 15px; }
+            .header h1 { font-size: 1.6rem; }
+            .city-point { width: 28px; height: 28px; font-size: 0.85rem; border-width: 2px; }
+            .city-label { font-size: 0.7rem; padding: 3px 8px; }
+            .modal-content { padding: 30px 20px 25px 20px; }
+            .modal-content .close-btn { top: 5px; right: 5px; font-size: 1.8rem; padding: 5px 10px; }
+            .modal-content .modal-city { font-size: 1.3rem; padding-right: 35px; }
+            .finish-box h2 { font-size: 1.5rem; }
+            button { padding: 12px 20px; font-size: 1rem; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <a href="https://vk.com/ykazateli_of_christ" target="_blank" class="studio-link">
+                🕯️ Библейская студия анимации «Указатели»
+            </a>
+            <h1>🗺️ Третье путешествие Павла</h1>
+            <p class="subtitle">Деяния 18:23 – 21:17</p>
+        </div>
+
+        <!-- ЭКРАН 1 -->
+        <div id="screen1" class="screen active">
+            <div class="intro-text">
+                Третье путешествие Павла стало самым длительным. Центром служения стал <span class="highlight">Ефес</span>, где он пробыл около трёх лет.<br><br>
+                Нажми на каждую точку на карте <strong>по порядку</strong>, чтобы узнать, что происходило в этом городе или регионе.
+                <div class="reference">📖 Деяния 18:23</div>
+            </div>
+            <button onclick="goToStep(2)">🗺️ Открыть карту</button>
+        </div>
+
+        <!-- ЭКРАН 2 -->
+        <div id="screen2" class="screen">
+            <div class="progress">
+                🏙️ Посещено мест: <span id="visitedCount">0</span> из 10
+            </div>
+
+            <div class="map-wrapper" id="mapWrapper">
+                <img src="map.jpg" alt="Карта третьего путешествия Павла">
+            </div>
+
+            <button class="secondary" onclick="resetVisited()">🔄 Сбросить</button>
+            <div class="nav-buttons">
+                <button class="secondary" onclick="goToStep(1)">⬅️ Назад</button>
+                <button onclick="goToStep(3)">➡️ Завершить</button>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 3 -->
+        <div id="screen3" class="screen">
+            <div class="finish-box">
+                <h2>🕊️ Путь пройден</h2>
+                <p>
+                    Третье путешествие стало самым плодотворным: три года в Ефесе, укрепление церквей в Македонии и Греции, и путь в Иерусалим.
+                </p>
+                <p>
+                    <strong>Главный урок:</strong> Бог призывает нас не только начинать, но и укреплять, наставлять и завершать путь с верой.
+                </p>
+                <div class="final-verse">
+                    «И, пробыв там довольно времени, отпущен был братиями с миром к пославшим его»<br>
+                    <span style="font-style: normal; font-weight: 600; color: #4a3520;">— Деяния 18:22</span>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="secondary" onclick="goToStep(2)">⬅️ К карте</button>
+                <button onclick="resetAll()">🔄 Пройти заново</button>
+            </div>
+        </div>
+
+        <!-- МОДАЛЬНОЕ ОКНО -->
+        <div class="modal" id="cityModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <div id="modalBody"></div>
+            </div>
+        </div>
+
+        <!-- ФУТЕР -->
+        <div class="footer">
+            <a href="https://vk.com/ykazateli_of_christ" target="_blank" class="studio-link">
+                🕯️ Изучайте Писание вместе с «Указателями»
+            </a>
+            <span class="small-note">Серия «Путешествия Павла» — урок 3</span>
+        </div>
+    </div>
+
+    <script>
+        const CITIES = [
+            {
+                name: "Антиохия Сирийская",
+                x: 90.15,
+                y: 40.11,
+                verse: "«И, пробыв там несколько времени, отправился и проходил по порядку страну Галатийскую и Фригию, утверждая всех учеников»",
+                text: "Здесь началось третье путешествие. Павел отправился укреплять церкви, которые основал ранее.",
+                ref: "Деяния 18:23"
+            },
+            {
+                name: "Галатия и Фригия",
+                x: 61.02,
+                y: 22.51,
+                verse: "«...проходил по порядку страну Галатийскую и Фригию, утверждая всех учеников»",
+                text: "Павел прошёл через эти регионы, укрепляя верующих в вере. Это были уже основанные им церкви.",
+                ref: "Деяния 18:23"
+            },
+            {
+                name: "Ефес",
+                x: 39.54,
+                y: 36.10,
+                verse: "«И, придя в Ефес, он нашёл там некоторых учеников и сказал им: приняли ли вы Святого Духа, уверовав? Они же сказали ему: мы даже и не слыхали, есть ли Дух Святой»",
+                text: "Ефес стал центром третьего путешествия. Павел пробыл здесь около трёх лет, проповедуя и уча. Здесь произошло великое пробуждение и были написаны письма к церквам.",
+                ref: "Деяния 19:1-40"
+            },
+            {
+                name: "Македония",
+                x: 12.96,
+                y: 10.08,
+                verse: "«Пройдя же те места и преподав верующим обильные наставления, пришёл в Елладу»",
+                text: "Павел прошёл через Македонию, посещая уже основанные церкви — Филиппы, Фессалоники, Верия. Он укреплял верующих и готовил их к дальнейшему служению.",
+                ref: "Деяния 20:1-2"
+            },
+            {
+                name: "Греция (Коринф)",
+                x: 15.17,
+                y: 39.11,
+                verse: "«...пришёл в Елладу. И, пробыв там три месяца, когда он хотел отплыть в Сирию, то Иудеи сделали против него заговор»",
+                text: "Павел провёл три месяца в Греции, вероятно, в Коринфе. Здесь он продолжал наставлять церкви и готовился к возвращению.",
+                ref: "Деяния 20:2-3"
+            },
+            {
+                name: "Троада",
+                x: 33.41,
+                y: 18.94,
+                verse: "«В первый же день недели, когда ученики собрались для преломления хлеба, Павел беседовал с ними до полуночи... И довольно долго беседовал, так что юноша по имени Евтих, сидя на окне, погрузился в глубокий сон и упал с третьего жилья вниз, и подняли его мёртвым»",
+                text: "В Троаде Павел воскресил юношу Евтиха, который упал из окна во время долгой беседы. Это чудо укрепило веру многих.",
+                ref: "Деяния 20:6-12"
+            },
+            {
+                name: "Асс",
+                x: 35.39,
+                y: 22.34,
+                verse: "«А мы, взойдя на корабль, отплыли в Асс, откуда намеревались взять Павла; ибо так приказал он, потому что сам хотел идти пешком»",
+                text: "Павел прошёл из Троады в Асс пешком, а спутники плыли на корабле. Здесь они встретились и продолжили путь вместе.",
+                ref: "Деяния 20:13-14"
+            },
+            {
+                name: "Милит",
+                x: 40.71,
+                y: 41.78,
+                verse: "«Посему бодрствуйте, памятуя, что я три года день и ночь непрестанно со слезами учил каждого из вас... И ныне предаю вас, братия, Богу и слову благодати Его»",
+                text: "В Милите Павел произнёс прощальную речь к пресвитерам Ефеса. Он говорил о своём служении, предупредил о трудностях и предал их Богу.",
+                ref: "Деяния 20:15-38"
+            },
+            {
+                name: "Кесария",
+                x: 85.96,
+                y: 84.96,
+                verse: "«...пришли мы в Кесарию и, войдя в дом Филиппа благовестника, одного из семи диаконов, остались у него»",
+                text: "В Кесарии Павел остановился в доме Филиппа. Здесь пророк Агав предсказал его будущие страдания в Иерусалиме.",
+                ref: "Деяния 21:8-14"
+            },
+            {
+                name: "Иерусалим",
+                x: 86.22,
+                y: 90.36,
+                verse: "«...пришли в Иерусалим. Братия приняли нас с радостью»",
+                text: "Здесь завершилось третье путешествие. Павел был принят братьями, но вскоре его арестовали — так начался его путь в Рим.",
+                ref: "Деяния 21:15-17"
+            }
+        ];
+
+        let visited = [];
+
+        function renderMap() {
+            const wrapper = document.getElementById('mapWrapper');
+            wrapper.querySelectorAll('.city-point, .city-label').forEach(el => el.remove());
+
+            CITIES.forEach((city, index) => {
+                const point = document.createElement('div');
+                point.className = 'city-point' + (visited.includes(index) ? ' visited' : '');
+                point.style.left = city.x + '%';
+                point.style.top = city.y + '%';
+                point.textContent = index + 1;
+                point.dataset.index = index;
+                point.addEventListener('click', () => openCity(index));
+                wrapper.appendChild(point);
+
+                const label = document.createElement('div');
+                label.className = 'city-label';
+                label.style.left = city.x + '%';
+                label.style.top = city.y + '%';
+                label.textContent = city.name;
+                wrapper.appendChild(label);
+            });
+
+            document.getElementById('visitedCount').textContent = visited.length;
+        }
+
+        function openCity(index) {
+            const city = CITIES[index];
+            if (!visited.includes(index)) {
+                visited.push(index);
+            }
+
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="modal-city">📍 ${city.name}</div>
+                <div class="modal-verse">${city.verse}</div>
+                <div class="modal-text">${city.text}</div>
+                <div class="modal-ref">📖 ${city.ref}</div>
+            `;
+            document.getElementById('cityModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            renderMap();
+        }
+
+        function closeModal() {
+            document.getElementById('cityModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('cityModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        function goToStep(stepNumber) {
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById('screen' + stepNumber).classList.add('active');
+            document.querySelector('.app-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function resetVisited() {
+            visited = [];
+            renderMap();
+        }
+
+        function resetAll() {
+            visited = [];
+            renderMap();
+            goToStep(1);
+        }
+
+        renderMap();
+    </script>
+</body>
+</html>
